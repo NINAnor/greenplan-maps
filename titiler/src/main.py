@@ -1,4 +1,4 @@
-# app.py
+#!/usr/bin/env python3
 import uvicorn
 
 if __name__ == '__main__':

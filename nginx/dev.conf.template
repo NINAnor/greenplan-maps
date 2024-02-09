@@ -1,3 +1,8 @@
+upstream titiler {
+    server titiler:8080;
+    keepalive 64;
+}
+
 server {
     listen       80;
     server_name  localhost;
@@ -9,7 +14,7 @@ server {
     }
 
     location /tiler/ {
-        proxy_pass http://titiler:8080;
+        proxy_pass http://titiler;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "Upgrade";

@@ -4,68 +4,80 @@ app/dependencies.py
 
 """
 
-import json
+from typing import List
 
-from typing import Dict, Optional, Literal
-from typing_extensions import Annotated
+import cv2
 
-import numpy
-import matplotlib
-from rio_tiler.colormap import parse_color
-from rio_tiler.colormap import cmap as default_cmap
 from titiler.core.algorithm import BaseAlgorithm
 from rio_tiler.models import ImageData
-from fastapi import HTTPException, Query
-
-def generate_colorblind_palette():
-    cm = matplotlib.colors.LinearSegmentedColormap.from_list("internal", ['#f0f921', '#fdca26', '#fb9f3a', '#ed7953', '#d8576b', '#bd3786', '#9c179e', '#7201a8', '#46039f', '#0d0887'], 256)
-    x = numpy.linspace(0, 1, 256)
-    cmap_vals = cm(x)[:, :]
-    cmap_uint8 = (cmap_vals * 255).astype('uint8')
-    cmap_uint8[0][3] = 0
-    
-    return {idx: value.tolist() for idx, value in enumerate(cmap_uint8)}
+from rio_tiler.io import Reader
+from rasterio import windows
 
 
-def generate_binary_colormap():
-    return {
-        0: (0, 0, 0, 0),
-        1: (240, 249, 33, 255)
-    }
 
-default_cmap = default_cmap.register({"colorblind": generate_colorblind_palette(), "nbinary": generate_binary_colormap()})
+class StravaHeatmap(BaseAlgorithm):
+    '''
+    requires that the layer sets the buffer parameter &buffer=x
+    '''
+    input_nbands: int = 1
+    output_nbands: int = 1
+    output_dtype: str = "uint8"
+
+    buffer: int = 512
+    tilesize: int = 256
+
+    def __call__(self, img: ImageData) -> ImageData:
+        stats = img.statistics()
+        bs = stats.get('b1')
+        bstats = (bs.min, bs.max)
+        
+        img.rescale(
+            in_range=(bstats,),
+            out_range=((0, 255),)
+        )
+        eq_img = cv2.equalizeHist(img.data_as_image())
+        bounds = windows.bounds(windows.Window(self.tilesize, self.tilesize, self.tilesize, self.tilesize), img.transform)
+        img = img.clip(bounds)
+        return ImageData(
+            eq_img[self.buffer:self.buffer+self.tilesize, self.buffer:self.buffer+self.tilesize],
+            assets=img.assets,
+            crs=img.crs,
+            bounds=img.bounds,
+        )
 
 
-def ColorMapParams(
-    colormap_name: Annotated[  # type: ignore
-        Literal[tuple(default_cmap.list())],
-        Query(description="Colormap name"),
-    ] = None,
-    colormap: Annotated[
-        str,
-        Query(description="JSON encoded custom Colormap"),
-    ] = None,
-    colormap_type: Annotated[
-        Literal["explicit", "linear"],
-        Query(description="User input colormap type."),
-    ] = "explicit",
-) -> Optional[Dict]:
-    """Colormap Dependency."""
-    if colormap_name:
-        return default_cmap.get(colormap_name)
+# TODO: use a caching system
+ASSETS = {}
 
-    if colormap:
-        try:
-            cm = json.loads(
-                colormap,
-                object_hook=lambda x: {int(k): parse_color(v) for k, v in x.items()},
+class BBoxStats(BaseAlgorithm):
+    input_nbands: int = 1
+    output_nbands: int = 1
+    output_dtype: str = "uint8"
+
+    bbox: List[float]
+    scale: int = 1
+
+    def __call__(self, img: ImageData) -> ImageData:
+        if self.scale > 8:
+            index = img.assets[0] + ','.join([str(v) for v in self.bbox])
+            if index in ASSETS:
+                bstats = ASSETS[index]
+            else:
+                with Reader(img.assets[0]) as dst:
+                    cov = dst.part(self.bbox)
+                    stats = cov.statistics()
+                    bs = stats.get('b1')
+                    bstats = ((bs.min, bs.max),)
+                    ASSETS[index] = bstats
+
+            img.rescale(
+                in_range=bstats,
+                out_range=((0, 255),)
             )
-        except json.JSONDecodeError:
-            raise HTTPException(
-                status_code=400, detail="Could not parse the colormap value."
+        else:
+            stats = img.dataset_statistics
+            img.rescale(
+                in_range=stats,
+                out_range=((0, 255),)
             )
-
-        return cm
-    else:
-        return default_cmap.get('colorblind')
-
+        return img

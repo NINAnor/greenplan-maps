@@ -3,6 +3,21 @@ import { Tree } from 'react-arborist';
 import MapContext from "../map";
 import LegendSymbol from "./LegendSymbol";
 
+function toBoundsString(tile, map) {
+  let bounds = map.getBounds().toArray()
+  return tile.replace('{bbox}', [
+    ...bounds[0], ...bounds[1]
+  ].join(',')).replace('{zoom}', Math.round(map.getZoom()))
+}
+
+function tileUpdater(sourceId, baseTile) {
+  return (e) => {
+    const map = e.target;
+    let t = toBoundsString(baseTile, map);
+    map.getSource(sourceId).setTiles([t]);
+  }
+}
+
 function Layer({ node, style, dragHandle }) {
   const { map, layers, lazy } = useContext(MapContext);
   const layer = layers[node.data.id];
@@ -13,7 +28,18 @@ function Layer({ node, style, dragHandle }) {
     if (layer) {
       map.setLayoutProperty(node.data.id, 'visibility', layer.isVisible ? 'none' : 'visible');
     } else {
+      const original_tile = lazy.layers[node.data.id].source.tiles[0];
+      const { dependsOnBBox = false } = lazy.layers[node.data.id];
+      if (dependsOnBBox) {
+        let t = toBoundsString(original_tile, map);
+        lazy.layers[node.data.id].source.tiles[0] = t;
+      }
       map.addLayer(lazy.layers[node.data.id]);
+      if (dependsOnBBox) {
+        const tileUpdaterFn = tileUpdater(node.data.id, original_tile);
+        map.on('moveend', tileUpdaterFn);
+        map.on('zoomend', tileUpdaterFn);
+      }
     }
   }
 

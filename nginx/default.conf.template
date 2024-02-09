@@ -1,23 +1,19 @@
+upstream titiler {
+    server titiler:8080;
+    keepalive 64;
+}
+
 server {
     listen       80;
     server_name  localhost;
     root   /var/www;
 
-    location ~* ^/data/(.+) {
-        try_files $uri $uri/;
-    }
-
     location /tiler/ {
-        proxy_pass http://titiler:8080;
+        proxy_pass http://titiler;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "Upgrade";
         proxy_set_header Host $host;
-    }
-
-
-    location / {
-        try_files $uri /index.html;
     }
 
     error_page   500 502 503 504  /50x.html;
