@@ -47,6 +47,29 @@ class StravaHeatmap(BaseAlgorithm):
             bounds=img.bounds,
         )
 
+class StravaCLAHE(BaseAlgorithm):
+    '''
+    requires that the layer sets the buffer parameter &buffer=x
+    '''
+    input_nbands: int = 1
+    output_nbands: int = 1
+    output_dtype: str = "uint8"
+
+    buffer: int = 512
+    tilesize: int = 256
+    def __call__(self, img: ImageData) -> ImageData:
+        data = img.data_as_image()
+        data = cv2.normalize(src=data, dst=None, alpha=0, beta=2**8, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+        clahe = cv2.createCLAHE(clipLimit=1, tileGridSize=(3, 3))
+        eq_img = clahe.apply(data)
+        bounds = windows.bounds(windows.Window(self.tilesize, self.tilesize, self.tilesize, self.tilesize), img.transform)
+        pos_start, pos_end = self.buffer, self.buffer+self.tilesize
+        return ImageData(
+            eq_img[pos_start:pos_end, pos_start:pos_end],
+            assets=img.assets,
+            crs=img.crs,
+            bounds=img.bounds,
+        )
 
 # TODO: use a caching system
 ASSETS = {}
@@ -85,5 +108,9 @@ class BBoxStats(BaseAlgorithm):
         return img
 
 
-algorithms: Algorithms = default_algorithms.register({"stravaheatmap": StravaHeatmap, "bboxstats": BBoxStats})
+algorithms: Algorithms = default_algorithms.register({
+    "stravaheatmap": StravaHeatmap, 
+    "bboxstats": BBoxStats,
+    "stravaclahe": StravaCLAHE,
+})
 PostProcessParams: Callable = algorithms.dependency
