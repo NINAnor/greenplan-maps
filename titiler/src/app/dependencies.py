@@ -7,6 +7,7 @@ app/dependencies.py
 from typing import List, Callable
 
 import cv2
+import numpy as np
 
 from titiler.core.algorithm import BaseAlgorithm
 from rio_tiler.models import ImageData
@@ -62,10 +63,10 @@ class StravaCLAHE(BaseAlgorithm):
         data = cv2.normalize(src=data, dst=None, alpha=0, beta=2**8, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
         clahe = cv2.createCLAHE(clipLimit=1, tileGridSize=(3, 3))
         eq_img = clahe.apply(data)
-        bounds = windows.bounds(windows.Window(self.tilesize, self.tilesize, self.tilesize, self.tilesize), img.transform)
         pos_start, pos_end = self.buffer, self.buffer+self.tilesize
+        masked_data = np.ma.MaskedArray(eq_img[pos_start:pos_end, pos_start:pos_end], mask=img.mask)
         return ImageData(
-            eq_img[pos_start:pos_end, pos_start:pos_end],
+            masked_data,
             assets=img.assets,
             crs=img.crs,
             bounds=img.bounds,
