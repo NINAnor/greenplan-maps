@@ -4,7 +4,7 @@ app/dependencies.py
 
 """
 
-from typing import List
+from typing import List, Callable
 
 import cv2
 
@@ -13,6 +13,8 @@ from rio_tiler.models import ImageData
 from rio_tiler.io import Reader
 from rasterio import windows
 
+from titiler.core.algorithm import algorithms as default_algorithms
+from titiler.core.algorithm import Algorithms
 
 
 class StravaHeatmap(BaseAlgorithm):
@@ -81,3 +83,7 @@ class BBoxStats(BaseAlgorithm):
                 out_range=((0, 255),)
             )
         return img
+
+
+algorithms: Algorithms = default_algorithms.register({"stravaheatmap": StravaHeatmap, "bboxstats": BBoxStats})
+PostProcessParams: Callable = algorithms.dependency

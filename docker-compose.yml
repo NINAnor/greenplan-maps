@@ -42,7 +42,7 @@ services:
     volumes:
       - ./titiler/src:/app/src
     environment:
-      - TITILER_API_ROOT_PATH=tiler
+      - TITILER_API_ROOT_PATH=/tiler
 
   jupyter:
     build: ./titiler
