@@ -34,8 +34,6 @@ services:
   titiler:
     build: ./titiler
     tty: true
-    depends_on:
-      - nginx-dev
     stdin_open: true
     ports:
       - "5002:8080"
@@ -43,6 +41,8 @@ services:
       - ./titiler/src:/app/src
     environment:
       - TITILER_API_ROOT_PATH=/tiler
+      - TITILER_API_CACHECONTROL=no-cache
+    command: ["pdm", "run", "uvicorn", "src.app.app:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
 
   jupyter:
     build: ./titiler
