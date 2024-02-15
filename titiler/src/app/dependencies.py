@@ -64,9 +64,21 @@ class StravaCLAHE(BaseAlgorithm):
         clahe = cv2.createCLAHE(clipLimit=1, tileGridSize=(3, 3))
         eq_img = clahe.apply(data)
         pos_start, pos_end = self.buffer, self.buffer+self.tilesize
-        masked_data = np.ma.MaskedArray(eq_img[pos_start:pos_end, pos_start:pos_end], mask=img.mask)
+        cut_img = eq_img[pos_start:pos_end, pos_start:pos_end]
+
+        # compute the mask, find all the nan values
+        mask = (np.isnan(img.data))[0][pos_start:pos_end, pos_start:pos_end]
+        # generate a new image applying the mask and zero-ing all the masked pixel
+        data = np.where(~mask, cut_img, 0)
+        # generate an array mask, with 0 and 255
+        modified_mask = np.where(mask, 255, 0)
+        # apply the mask over multiple bands
+        if img.data.shape[0] > 1:
+            modified_mask = np.repeat(modified_mask[None, :, :], img.data.shape[0], axis=0)
+
+        masked_array = np.ma.MaskedArray(data, mask=modified_mask)
         return ImageData(
-            masked_data,
+            masked_array,
             assets=img.assets,
             crs=img.crs,
             bounds=img.bounds,
