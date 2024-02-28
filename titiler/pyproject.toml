@@ -17,6 +17,7 @@ dependencies = [
     "jupyter>=1.0.0",
     "notebook>=7.0.7",
     "jupyterlab>=4.1.0",
+    "walrus>=0.9.3",
 ]
 requires-python = ">=3.10"
 readme = "README.md"

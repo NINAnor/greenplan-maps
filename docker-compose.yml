@@ -42,6 +42,7 @@ services:
     environment:
       - TITILER_API_ROOT_PATH=/tiler
       - TITILER_API_CACHECONTROL=no-cache
+      - REDIS_HOST=redis
     command: ["pdm", "run", "uvicorn", "src.app.app:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
 
   jupyter:
@@ -51,3 +52,7 @@ services:
       - 8888:8888
     volumes:
       - ./titiler/src:/app/src
+
+  redis:
+    image: redis
+  
