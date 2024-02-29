@@ -1,6 +1,6 @@
 FROM registry.opensuse.org/opensuse/leap:latest as base
 RUN --mount=type=cache,target=/var/cache/zypper \
-    zypper install --no-recommends -y python311 opencv libgthread-2_0-0
+    zypper install --no-recommends -y python311
 WORKDIR /app
 ENV PYTHONPATH=/app/.venv/lib
 ENV PATH=$PATH:/app/.venv/bin
