@@ -1,6 +1,5 @@
-# BBox colorscale map
-experimental maplibre map with dynamic colormap based on bbox
-also experimenting strava heatmap implmentation https://medium.com/strava-engineering/the-global-heatmap-now-6x-hotter-23fc01d301de
+# Greenplan maps
+Implements viewer with colormaps based on min/max of the current bbox
 
 
 ## Running the webapp
