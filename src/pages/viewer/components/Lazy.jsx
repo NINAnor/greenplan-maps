@@ -1,5 +1,5 @@
-import MapContext from "../map";
 import { useContext, useEffect } from 'react';
+import { MapContext } from '../contexts';
 
 
 export default function Lazy({ lazy }) {

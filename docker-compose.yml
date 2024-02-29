@@ -16,6 +16,7 @@ services:
     profiles:
       - dev
     image: nginx
+    hostname: nginx
     volumes:
       - ./data:/var/www/data:ro
       - ./nginx/dev.conf.template:/etc/nginx/templates/default.conf.template:ro
@@ -42,16 +43,9 @@ services:
     environment:
       - TITILER_API_ROOT_PATH=/tiler
       - TITILER_API_CACHECONTROL=no-cache
+      - FORWARDED_ALLOW_IPS="*"
       - REDIS_HOST=redis
-    command: ["pdm", "run", "uvicorn", "src.app.app:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
-
-  jupyter:
-    build: ./titiler
-    command: jupyter notebook --allow-root --ip 0.0.0.0 --no-browser --NotebookApp.token='' --NotebookApp.password=''
-    ports:
-      - 8888:8888
-    volumes:
-      - ./titiler/src:/app/src
+    command: ["pdm", "run", "uvicorn", "src.app.app:app", "--host", "0.0.0.0", "--port", "8080", "--reload", "--proxy-headers"]
 
   redis:
     image: redis

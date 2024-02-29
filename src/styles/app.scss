@@ -1,0 +1,76 @@
+// definition
+$nina-primary: #425563;
+$nina-secondary: #008C95;
+
+$nina-accent: #E57200;
+
+// override
+$primary: $nina-primary;
+$link: $nina-secondary;
+$family-primary: "Open Sans", Helvetica, Arial;
+$family-secondary: "Open Sans", Helvetica, Arial;
+
+@import "../node_modules/bulma/bulma.sass";
+
+
+@import 'maplibre-gl/dist/maplibre-gl.css';
+@import '@maplibre/maplibre-gl-geocoder/dist/maplibre-gl-geocoder.css';
+@import 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css';
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+
+.hero {
+    .logo {
+        max-height: 5rem;
+    }
+
+    .title:not(.is-spaced) + .subtitle {
+        margin-top: -0.9rem;
+    }
+}
+
+
+#app-wrap {
+    height: 100vh;
+    overflow-y: hide;
+
+    #sidebar {
+        width: 400px;
+        overflow-y: auto;
+    }
+
+    .map {
+        height: 100%;
+        z-index: 0;
+    }
+
+    .map-wrap {
+        flex-grow: 1;
+    }
+
+    .maplibregl-popup {
+        max-width: 100% !important;
+        line-height: 1em;
+    }
+
+    .metadata {
+        padding: 0 0.5rem;
+    }
+
+    .layers {
+        padding: 0 8px;
+    }
+}
+
+.wrapper {
+  padding: 0.5rem;
+}
+
+.metadata h3 {
+  padding: 0.2rem 0;
+}

@@ -1,4 +1,5 @@
 import { ErrorComponent, Route } from "@tanstack/react-router";
+import parse from 'html-react-parser';
 import rootRoute from "../root";
 import Layers from "./components/Layers";
 import Map from "./components/Map";
@@ -7,6 +8,10 @@ import Metadata from "./components/Metadata";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import mapApi from "../../api";
 import { NotFoundError } from "../../lib/utils";
+import { Content, Tabs } from "react-bulma-components";
+import { useMemo, useState } from "react";
+import { Helmet } from "react-helmet";
+import ModalContextProvider from "./components/ModalContextProvider";
 import Lazy from "./components/Lazy";
 
 const fetchMap = async () => {
@@ -45,6 +50,39 @@ function MapErrorComponent({ error }) {
   return <ErrorComponent error={error} />
 }
 
+const TABS = {
+  kartlag: {
+    label: 'Kartlag',
+    render: (map) => <Layers layers={map.data.layers} />,
+  },
+  beskrivelse: {
+    label: 'Beskrivelse',
+    render: (map) => (
+    <Content px={2}>
+      {parse(map.data.description)}
+    </Content>
+    )
+  }
+}
+
+function TabNav({ map }) {
+  const [active, setActive] = useState('kartlag');
+
+  const render = useMemo(() => TABS[active].render(map), [active, map]);
+
+  return (
+    <>
+      <Tabs fullwidth mt={3}>
+        {Object.keys(TABS).map(k => (
+          <Tabs.Tab active={k === active} key={k} onClick={() => setActive(k)}>
+            {TABS[k].label}
+          </Tabs.Tab>
+        ))}
+      </Tabs>
+      {render}
+    </>
+  )
+}
 
 export function Viewer() {
   const mapQuery = useSuspenseQuery(mapQueryOptions);
@@ -54,14 +92,19 @@ export function Viewer() {
 
   return (
     <MapContextProvider>
-      <div id="app-wrap" style={{ display: 'flex' }}>
-        <div id="sidebar">
-          <Metadata {...map.data} />
-          <Layers layers={map.data.layers} />
-          <Lazy lazy={map.data.lazy} />
+      <ModalContextProvider>
+        <Helmet 
+          title={map.data.title}
+        />
+        <div id="app-wrap" style={{ display: 'flex' }}>
+          <div id="sidebar">
+            <Metadata {...map.data} />
+            <Lazy lazy={map.data.lazy} />
+            <TabNav map={map} />
+          </div>
+          <Map {...map.data} />
         </div>
-        <Map {...map.data} />
-      </div>
+      </ModalContextProvider>
     </MapContextProvider>
   );
 }

@@ -6,8 +6,6 @@ html,
 body {
   height: 100%;
   margin: 0;
-  font-family: "Open Sans";
-  color: #0D0D00;
 }
 
 .map {
@@ -53,48 +51,4 @@ details summary + div {
   margin-left: 0.5rem;
   max-height: 200px;
   overflow-y: scroll;
-}
-
-.text-truncate {
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.layers .row {
-  display: flex;
-}
-
-.layers .grow {
-  flex-grow: 1;
-}
-
-.layers .group i {
-  margin-right: 0.5rem;
-}
-
-.layers .legend {
-  width: 17px;
-  margin: 0 0.5rem;
-}
-
-.logo {
-  max-width: 100%;
-  padding-top: 0.3rem;
-}
-
-#sidebar {
-  background-color: white;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  color: #003C65;
-}
-
-i.fas {
-  color: #003C65;
-}
-
-a, a > i.fas {
-  color: #03B3CF;
 }

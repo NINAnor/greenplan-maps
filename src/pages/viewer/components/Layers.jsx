@@ -1,7 +1,8 @@
 import { useContext, useMemo, useState } from "react";
 import { Tree } from 'react-arborist';
-import MapContext from "../map";
+import { MapContext, ModalContext } from "../contexts";
 import LegendSymbol from "./LegendSymbol";
+import { Button } from "react-bulma-components";
 
 function toBoundsString(tile, map) {
   let bounds = map.getBounds().toArray()
@@ -18,7 +19,7 @@ function tileUpdater(sourceId, baseTile) {
   }
 }
 
-function Layer({ node, style, dragHandle }) {
+function Layer({ node }) {
   const { map, layers, lazy } = useContext(MapContext);
   const layer = layers[node.data.id];
 
@@ -45,48 +46,54 @@ function Layer({ node, style, dragHandle }) {
 
   const legend = useMemo(() => {
     try {
-      return layer ? LegendSymbol(layer, map) : LegendSymbol(lazy.layers[node.data.id], map);
+      if (layer) {
+        return LegendSymbol(layer, map);
+      } else if (lazy.layers && lazy.layers[node.data.id]) {
+        return LegendSymbol(lazy.layers[node.data.id], map)
+      }
+      return null;
     } catch(e) {
+      console.log(layer, lazy.layers, node.data.id);
       console.log(e);
       return null;
     }
   }, [layer, lazy])
 
   return (
-    <div style={style} ref={dragHandle}>
-      <div className="row">
-        <div className="row grow group" onClick={updateVisibility}>
-          <i className={icon}></i>
-          <div className="legend">{legend}</div>
-          <div className="text-truncate">{node.data.name}</div>
-        </div>
-        {node.data.download && (<div><a href={node.data.download} download><i className="fas fa-download"></i></a></div>)}
-      </div>
-    </div>
+    <div onClick={updateVisibility} style={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+      <i className={icon}></i>
+      <div style={{ width: '17px', height: '17px', margin: '0 0.5rem' }}>{legend}</div>
+      <div>{node.data.name}</div>
+    </div>  
   );
 }
 
-function Group({ node, style, dragHandle }) {
+function Group({ node }) {
   return (
-    <div style={style} ref={dragHandle}>
-      <div className="row" >
-        <div className="row grow group" onClick={() => node.toggle()}>
-          <i className={`fas fa-folder${node.isOpen ? '-open' : '' }`}></i>
-          <span className="text-truncate">{node.data.name}</span>
-        </div>
-        {node.data.download && (<div><a href={node.data.download} download><i className="fas fa-download"></i></a></div>)}
-      </div>
-    </div>
+    <div onClick={() => node.toggle()} style={{ flexGrow: 1 }}><i className={`fas fa-folder${node.isOpen ? '-open' : '' }`}></i> {node.data.name}</div>
   );
 }
 
-function Child({ node, ...other }) {
+function Child({ node, dragHandle, style }) {
+  const openNodeDescription = useContext(ModalContext);
+
   let Component = Group
   if (node.isLeaf) {
     Component = Layer
   }
 
-  return <Component node={node} {...other} />
+  return (
+    <div style={style} ref={dragHandle}>
+      <div style={{ display: 'flex' }}>
+        <Component node={node} />
+        <div style={{ display: 'flex' }}>
+          {node.data.description && (<Button size="small" text onClick={() => openNodeDescription(node.data)}><i className="fas fa-info"></i></Button>)}
+          {node.data.link && (<Button size="small" renderAs="a" text href={node.data.link} target="_blank"><i className="fas fa-info"></i></Button>)}
+          {node.data.download && (<Button size="small" text renderAs="a" href={node.data.download} download><i className="fas fa-download"></i></Button>)}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 const options = {
@@ -94,6 +101,7 @@ const options = {
 }
 
 const ROW_HEIGHT = 30;
+const SIDEBAR_WIDTH = 400 - 16; // 400 - 8px padding per side
 
 function useTreeVisibleNodesCount() {
   const [count, setCount] = useState(0)
@@ -108,20 +116,17 @@ export default function Layers({ layers = [] }) {
 
   return (
     <div className="layers">
-      <div>
-        <h5>Kartlag</h5>
-      </div>
       <Tree
         initialData={layers}
         disableEdit
         disableDrag
         disableDrop
         disableMultiSelection
-        openByDefault={false}
+        openByDefault
         height={count * ROW_HEIGHT}
         indent={10}
-        width={400}
         rowHeight={ROW_HEIGHT}
+        width={SIDEBAR_WIDTH}
         overscanCount={1}
         ref={ref}
       >

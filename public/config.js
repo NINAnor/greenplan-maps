@@ -1,3 +1,2 @@
-window.API_URL = "";
-window.PORTAL_KEY = ""
+window.API_URL = "/data/";
 window.METADATA_URL = "metadata.json"
