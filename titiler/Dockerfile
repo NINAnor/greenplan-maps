@@ -17,4 +17,4 @@ RUN pdm install --prod
 
 FROM pdm
 COPY src src
-CMD ["pdm", "run", "uvicorn", "src.app.app:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["pdm", "run", "uvicorn", "src.app.app:app", "--host", "0.0.0.0", "--port", "8080", "--proxy-headers"],
