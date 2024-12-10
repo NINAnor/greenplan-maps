@@ -30,7 +30,7 @@
     "react-bulma-components": "^4.1.0",
     "react-dom": "^18.2.0",
     "react-helmet": "^6.1.0",
-    "rollup": "^4.5.2",
+    "rollup": "^4.28.1",
     "swr": "^2.2.4"
   },
   "devDependencies": {
